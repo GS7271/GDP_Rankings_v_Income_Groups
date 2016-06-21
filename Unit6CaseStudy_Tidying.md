@@ -3,46 +3,23 @@ Oscar Padilla
 June 13, 2016  
 
 
+#GDP Ranking and Income Group Analysis
+###CASE STUDY FOR UNIT 6 - *Tidy Data*
 
-#CASE STUDY FOR UNIT 6
-##Tidy Data
-Let's start with the GDP file 
+##I. Introduction
+The following analysis was developed using GDP Ranking Data from THE WORLD BANK, which includes 190 economies ranked from the largest (the USA) to the smallest (Tuvalu). This file was complemented by adding the Income Group found in the Education Statistics file from the same institution. This analysis aims to answer the question, what is the relation between the size of an economy and the standard of living of its citizens.
+
+##II. Data import and cleansing
+As explained in the README file, the following libraries are required. The subsequent code downloads the GDP file and prepares this first data set for merger.
 
 
 ```r
 library(repmis)
 library(dplyr)
-```
-
-```
-## 
-## Attaching package: 'dplyr'
-```
-
-```
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-```
-
-```
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
-```
-
-```r
 library(ggplot2)
 library(reshape2)
 library(countrycode)
 library(RCurl)
-```
-
-```
-## Loading required package: bitops
-```
-
-```r
 GDPurl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FGDP.csv"
 rawGDP <- source_data(GDPurl, sep = ",", header = FALSE, stringsAsFactors = TRUE)
 ```
@@ -143,10 +120,15 @@ head(GDPclean, 13)
 ## 12         GRD  178                        Grenada     767
 ## 13         KNA  178            St. Kitts and Nevis     767
 ```
-###2. Sort the data frame in ascending order by GDP rank (so United States is last). What is the 13th country in the resulting data frame?
+
+##III. Q&A Section
+
+Note: Question 1, which will be addressed in a later section
+
+####Question 2. Sort the data frame in ascending order by GDP rank (so United States is last). What is the 13th country in the resulting data frame?
 *The 13th country is St. Kitts and Nevis with a GDP of $ 767 million USD.*
 
-Let's move on to the educational data set.
+The Education Statistics data set provides the Income Group required for further analysis and the Country Code is used to link it with the GDP data frame.
 
 
 ```r
@@ -183,10 +165,12 @@ Once we have cleaned up both files, let's proceed to merge both data sets.
 GDPEdu <- merge(GDPclean, EduSelected, by = "CountryCode", all = TRUE)
 ```
 
-###1. Match the data based on the country shortcode. How many of the IDs match?
-*However 45 countries are missing GDP data.* which will be eliminated.
+####Question 1. Match the data based on the country shortcode. How many of the IDs match?
+*However 45 countries are missing GDP data, which will be eliminated.*
 
-###3. What are the average GDP rankings for the "High income: OECD" and "High income: nonOECD" groups?
+####Question 3. What are the average GDP rankings for the "High income: OECD" and "High income: nonOECD" groups?
+In order to answer the question above, we need to first convert the variable *rank_num* into a numeric variable in order to be able to compute the mean and select the respective Income Groups.
+
 
 ```r
 GDPEduSelected <- GDPEdu[!is.na(GDPEdu$GDP2012), ]
@@ -304,17 +288,99 @@ mean(GDPEduclean[!is.na(GDPEduclean$IncomeGroup) & GDPEduclean$IncomeGroup == "H
 ## [1] 91.91304
 ```
 
-###4.	Plot the GDP for all of the countries. Use ggplot2 to color your plot by Income Group.
+####Question 4.	Plot the GDP for all of the countries. Use ggplot2 to color your plot by Income Group.
 
-```r
-plot(GDPEduclean$rank_num, log10(GDP2012))
-```
+Given the enormous GDP range (e.g. from 16 trillion to 40 million), log base 10 is a better representation of the GDP variable.
 
-![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
 ggplot(data = GDPEduclean, aes(x = rank_num, y = log10(GDP2012))) + geom_point(aes(col = IncomeGroup)) + labs(title = "GDP as Function of Country Ranking", x = "GDP ranking", y = "log base 10 GDP")+ scale_fill_manual(breaks = 50, 100, 150, 200, 250)
 ```
 
-![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
+![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
+The chart matrix below clearly shows that there is a cluster of High Income: OECD countries on the high GDP values (e.g. large economies), as opposed to the Lower middle income category covering the whole GDP spectrum. On the same token small economies correlate to Low income countries.
+
+
+```r
+ggplot(data = GDPEduclean, aes(x = rank_num, y = log10(GDP2012))) + geom_point(aes(col = IncomeGroup)) + labs(title = "GDP as Function of Country Ranking", x = "GDP ranking", y = "log base 10 GDP")+ scale_fill_manual(breaks = 50, 100, 150, 200, 250) + facet_wrap(~IncomeGroup)
+```
+
+![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+Trying to plot ALL 190 country (short) names gets unwieldy and difficult to read. Thus, a random group of only 50 countries was plotted.
+
+
+```r
+RandomSampleofCountries <- sample(1:190, 50)
+GDPEducleanSample <- GDPEduclean[RandomSampleofCountries, ]
+ggplot(data = GDPEducleanSample, aes(x = CountryCode, y = log10(GDP2012))) + geom_text(aes(label = CountryCode, col = IncomeGroup, size = 1/rank_num)) + theme(axis.text.x = element_text(angle = 90, size = 5, vjust = 0))
+```
+
+![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+#####Top-38 Economies
+
+
+```r
+Top38_GDPEduclean <- head(GDPEduclean, 38)
+ggplot(data = Top38_GDPEduclean, aes(rank_num, log10(GDP2012))) + geom_text(aes(label = CountryCode, col = IncomeGroup, size = log10(GDP2012))) + labs(title = "Top 20 GDP Economies", y = "log base 10 GDP")
+```
+
+![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+#####Bottom-38 Economies
+
+```r
+Bottom38_GDPEduclean <- tail(GDPEduclean, 38)
+ggplot(data = Bottom38_GDPEduclean, aes(rank_num, log10(GDP2012))) + geom_text(aes(label = CountryCode, col = IncomeGroup, size = log10(GDP2012))) + labs(title = "Bottom 20 GDP Economies", y = "log base 10 GDP")
+```
+
+![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+####Question 5.	Cut the GDP ranking into 5 separate quantile groups. Make a table versus Income.Group. How many countries are Lower middle income but among the 38 nations with highest GDP?
+
+The following code creates 5 symmetrical groups (38 countries each) based on GDP ranking. 1 being the group with the largest economies and group 5 the one with the smallest countries by GDP ranking.
+
+
+```r
+GDPEduclean$rank_quant <- cut(GDPEduclean$rank_num, breaks = 5, labels = FALSE)
+GDPEducleanPivot <- acast(GDPEduclean, rank_quant ~ IncomeGroup)
+```
+
+```
+## Using rank_quant as value column: use value.var to override.
+```
+
+```
+## Aggregation function missing: defaulting to length
+```
+
+```r
+GDPEducleanPivot
+```
+
+```
+##   High income: OECD High income: nonOECD Low income Lower middle income
+## 1                18                    4          0                   5
+## 2                10                    5          1                  13
+## 3                 1                    8          9                  12
+## 4                 1                    4         16                   8
+## 5                 0                    2         11                  16
+##   Upper middle income NA
+## 1                  11  0
+## 2                   9  0
+## 3                   8  0
+## 4                   8  1
+## 5                   9  0
+```
+
+*Only 5 countries are Lower middle income AND also belong to the top GDP ranking quantile*
+
+##IV. Conclusions
+* How many countries are there? The World Bank effectively produces 2012 GDP data for 190 countries.
+* The difference in the size of the economies is abysmal: from the largest -trillions- to the smallest -millions.
+* The Organization for Economic Cooperation and Development OECD is comprised mainly by rich (high income) and large countries (high GDP).
+* Rich non-OECD countries tend to be middle size economies.
+* Poor (low income) countries are also small (at the bottom of the ranking) -no low income countries belong to the top 20% of GDP ranking.
+* The initial analysis carried out does not provide overwhelming evidence to conclude that larger economies are better off. Upper middle income and lower middle income economies are widespread. Further analysis is necessary and other variables such as GDP per capita, as well as, purchasing power parity (PPP) must be included.
