@@ -7,7 +7,7 @@ June 13, 2016
 ###CASE STUDY FOR UNIT 6 - *Tidy Data*
 
 ##I. Introduction
-The following analysis was developed using GDP Ranking Data from THE WORLD BANK, which includes 190 economies ranked from the largest (the USA) to the smallest (Tuvalu). This file was complemented by adding the Income Group found in the Education Statistics file from the same institution. This analysis aims to answer the question, what is the relation between the size of an economy and the standard of living of its citizens.
+The following analysis was developed using GDP Ranking Data from THE WORLD BANK, which includes 190 economies ranked from the largest (the USA) to the smallest (Tuvalu). This file was complemented by adding the Income Group found in the Education Statistics file from the same institution. This analysis aims to answer the question, what is the relation between the size of an economy and the standard of living of its citizens as represented by their income level.
 
 ##II. Data import and cleansing
 As explained in the README file, the following libraries are required. The subsequent code downloads the GDP file and prepares this first data set for merger.
@@ -166,7 +166,7 @@ GDPEdu <- merge(GDPclean, EduSelected, by = "CountryCode", all = TRUE)
 ```
 
 ####Question 1. Match the data based on the country shortcode. How many of the IDs match?
-*However 45 countries are missing GDP data, which will be eliminated.*
+*However 45 countries are missing GDP data, which will be eliminated leaving 190 countries with valid GDP data.*
 
 ####Question 3. What are the average GDP rankings for the "High income: OECD" and "High income: nonOECD" groups?
 In order to answer the question above, we need to first convert the variable *rank_num* into a numeric variable in order to be able to compute the mean and select the respective Income Groups.
@@ -294,7 +294,7 @@ Given the enormous GDP range (e.g. from 16 trillion to 40 million), log base 10 
 
 
 ```r
-ggplot(data = GDPEduclean, aes(x = rank_num, y = log10(GDP2012))) + geom_point(aes(col = IncomeGroup)) + labs(title = "GDP as Function of Country Ranking", x = "GDP ranking", y = "log base 10 GDP")+ scale_fill_manual(breaks = 50, 100, 150, 200, 250)
+ggplot(data = GDPEduclean, aes(x = rank_num, y = log10(GDP2012))) + geom_point(aes(col = IncomeGroup)) + labs(title = "GDP as Function of Country Ranking", size = 20, face = "bold", x = "GDP ranking", y = "log base 10 GDP")+ scale_fill_manual(breaks = 50, 100, 150, 200, 250)
 ```
 
 ![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
@@ -324,7 +324,7 @@ ggplot(data = GDPEducleanSample, aes(x = CountryCode, y = log10(GDP2012))) + geo
 
 ```r
 Top38_GDPEduclean <- head(GDPEduclean, 38)
-ggplot(data = Top38_GDPEduclean, aes(rank_num, log10(GDP2012))) + geom_text(aes(label = CountryCode, col = IncomeGroup, size = log10(GDP2012))) + labs(title = "Top 20 GDP Economies", y = "log base 10 GDP")
+ggplot(data = Top38_GDPEduclean, aes(rank_num, log10(GDP2012))) + geom_text(aes(label = CountryCode, col = IncomeGroup, size = log10(GDP2012))) + labs(title = "Top 38 GDP Economies", y = "log base 10 GDP")
 ```
 
 ![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
@@ -333,7 +333,7 @@ ggplot(data = Top38_GDPEduclean, aes(rank_num, log10(GDP2012))) + geom_text(aes(
 
 ```r
 Bottom38_GDPEduclean <- tail(GDPEduclean, 38)
-ggplot(data = Bottom38_GDPEduclean, aes(rank_num, log10(GDP2012))) + geom_text(aes(label = CountryCode, col = IncomeGroup, size = log10(GDP2012))) + labs(title = "Bottom 20 GDP Economies", y = "log base 10 GDP")
+ggplot(data = Bottom38_GDPEduclean, aes(rank_num, log10(GDP2012))) + geom_text(aes(label = CountryCode, col = IncomeGroup, size = log10(GDP2012))) + labs(title = "Bottom 38 GDP Economies", y = "log base 10 GDP")
 ```
 
 ![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
@@ -375,7 +375,17 @@ GDPEducleanPivot
 ## 5                   9  0
 ```
 
+```r
+GDPEducleanMelt <- melt(GDPEducleanPivot)
+GDPEducleanMelt <- GDPEducleanMelt[1:25, ]
+ggplot(data = GDPEducleanMelt, aes(x = Var2, y = Var1)) + scale_y_reverse() + geom_tile(data = GDPEducleanMelt, aes(fill = value), color = "white") + scale_fill_gradient2(low = "white", high = "red", limit = c(0, 18)) + labs(title = "GDP Rank Quantile vs. Income Group", x = "Income Group", y = "GDP Rank Quantile") + theme(axis.text.x = element_text(angle = 90))
+```
+
+![](Unit6CaseStudy_Tidying_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
 *Only 5 countries are Lower middle income AND also belong to the top GDP ranking quantile*
+
+The density matrix above clearly confirms our statements, High Income OECD countries overwhelming presence in the first quantile and on the other side of the spectrum Low and Lower Middle Income economies heavy presence in the lower quantiles.
 
 ##IV. Conclusions
 * How many countries are there? The World Bank effectively produces 2012 GDP data for 190 countries.
@@ -383,4 +393,4 @@ GDPEducleanPivot
 * The Organization for Economic Cooperation and Development OECD is comprised mainly by rich (high income) and large countries (high GDP).
 * Rich non-OECD countries tend to be middle size economies.
 * Poor (low income) countries are also small (at the bottom of the ranking) -no low income countries belong to the top 20% of GDP ranking.
-* The initial analysis carried out does not provide overwhelming evidence to conclude that larger economies are better off. Upper middle income and lower middle income economies are widespread. Further analysis is necessary and other variables such as GDP per capita, as well as, purchasing power parity (PPP) must be included.
+* The initial analysis carried out does not provide overwhelming evidence to conclude that larger economies are better off. Upper middle income and lower middle income economies are widespread in the GDP ranking spectrum. Further analysis is necessary including other variables, such as, GDP per capita, as well as, purchasing power parity (PPP), life expectancy, just to name a few, in order to draw conclusions of standard of living in function of GDP.
